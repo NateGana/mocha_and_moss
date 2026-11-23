@@ -68,26 +68,6 @@ calculate from. *Admin > More > Reset demo data* restores everything.
 `pubspec.lock` was written for the original project. `flutter pub get` will
 update it for the newly added `shared_preferences` package.
 
-## Folder structure
-
-```
-lib/
-  main.dart                 app + routes (splash decides the first screen)
-  config/brand.dart         name, tagline, currency, demo accounts
-  theme/app_theme.dart      palette + fonts (dark default, light optional)
-  models/models.dart        Product, Order, User, Promo, Review, Settings...
-  data/
-    app_store.dart          single app store: auth, cart, checkout, orders, admin edits, saving
-    pricing.dart            price + customization helpers
-    report_service.dart     sales numbers and CSV
-    seed_data.dart          sample menu, options, accounts, demo orders
-  widgets/                  logo, drink illustrations, shared UI, original login widgets
-  pages/                    splash, onboarding, login, signup
-  pages/customer/           home, menu, product page, cart, checkout, orders, profile...
-  pages/admin/              dashboard, orders, menu, inventory, more, settings...
-assets/images/              local photo + app icon
-test/widget_test.dart       store logic and login tests
-```
 
 ## Customizing
 
@@ -110,47 +90,7 @@ test/widget_test.dart       store logic and login tests
 - **Loyalty:** earning rate and rewards in *Admin > More > Loyalty*. Points are
   only given for completed, **paid** orders.
 
-## Demo-only parts (read before launch)
 
-- Data lives on one device. A customer on their phone and staff on another
-  device will **not** see each other's orders.
-- Passwords are stored as plain text on the device for the demo login. Do not
-  reuse real passwords. A real launch needs Firebase Auth (or similar).
-- "Forgot password" explains that email reset is not connected.
-- Social login buttons are visual placeholders.
-- Payments are never processed. GCash/bank orders stay **unpaid** until staff tap
-  *Mark paid*.
-- Not included: photo upload (for menu items and reviews) and push notifications,
-  since they need extra plugins and a backend.
-- Ingredient stock is manual. There are no recipes, so nothing is deducted automatically.
-
-## Going live with several devices (Firebase outline)
-
-The data layer is separate from the screens, so a backend can replace
-`AppStore` storage without redesigning the UI.
-
-1. Create a Firebase project and run `flutterfire configure` (creates
-   `firebase_options.dart` with *your* keys, so none are included here).
-2. Add `firebase_core`, `firebase_auth`, `cloud_firestore`.
-3. Replace the local sign-in in `AppStore.login/register` with Firebase Auth.
-4. Store `products`, `orders`, `promos`, etc. in Firestore.
-5. **Never trust the phone for money.** Price orders and check stock in a Cloud
-   Function (or Firestore rules + server code), not in the app. The demo does this
-   re-check on the device only.
-6. Starting security rules (adjust to your data model):
-
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{db}/documents {
-    function isAdmin() { return request.auth != null
-      && get(/databases/$(db)/documents/users/$(request.auth.uid)).data.isAdmin == true; }
-    match /products/{id} { allow read: if true; allow write: if isAdmin(); }
-    match /orders/{id} {
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
-      allow update: if isAdmin();
-    }
     match /users/{uid} { allow read, write: if request.auth.uid == uid || isAdmin(); }
   }
 }
