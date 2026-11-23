@@ -1,0 +1,157 @@
+# MOCHA & MOSS
+
+*Your Daily Comfort, Brewed Beautifully.*
+
+A Flutter café ordering and management app for a specialty café built around
+**mocha drinks**, with a smaller **matcha** collection, supporting café drinks
+and desserts. It started as the Bloom & Brew login demo and keeps its dark
+espresso / cream / gold / caramel look, its login and sign-up screens and its
+light/dark theme toggle.
+
+> **Demo mode.** The app has no server. Menu, accounts, orders, cart, loyalty
+> points and settings are saved **on the device** (`shared_preferences`).
+> Orders are **not** shared between phones. See "Going live" below.
+
+## Features
+
+**Customer**
+- Splash, 3-slide onboarding (with Skip), login, sign-up, saved sessions
+- Home storefront: hero, announcements, Signature Mocha, Matcha Corner, other
+  drinks, best sellers, new arrivals, offers and bundles, personal recommendations
+- Menu: 7 categories (Signature Mocha first), search (names, ingredients,
+  categories), filters (hot/iced, price, bestsellers, new, available), 5 sort orders
+- Drink page: size, hot/iced, sweetness, milk, espresso shots, toppings, matcha
+  options (only where relevant), quantity, notes, live price, related drinks
+- Cart (edit, merge, quantities), checkout (dine-in, pickup with time slots,
+  delivery with address; cash, GCash, bank transfer), promo codes, loyalty
+  rewards, order confirmation, live order tracker, history, reorder, cancel
+  before confirmation, reviews
+- Favorites, profile, saved addresses, notification settings, change password
+
+**Café owner (admin)**
+- Dashboard (sales today / 7 / 30 days, chart, best sellers, recent orders)
+  calculated from saved orders. Only **completed** orders count as revenue.
+- Order queue (New / Preparing / Ready / Done) with status actions
+- Menu manager: add / edit / delete drinks, sizes and prices, hot/iced, labels,
+  availability, stock, which options each drink offers
+- Drink options: sweetness levels, milks, shots, toppings, matcha extras (prices, on/off)
+- Inventory: product stock with low-stock alerts, manually edited ingredient stock
+- Customers, reports (date filters, CSV export to clipboard), promotions,
+  loyalty rules and rewards, announcements, review moderation, café settings
+
+## Demo accounts
+
+| Role | Email | Password |
+|---|---|---|
+| Customer | `demo@mochaandmoss.com` | `mocha123` |
+| Admin | `admin@mochaandmoss.com` | `admin123` |
+
+On the login screen, the **Customer demo** and **Admin demo** chips fill the
+form for you. You can also sign up a new customer account. The first launch
+creates two weeks of sample orders so the dashboard has real records to
+calculate from. *Admin > More > Reset demo data* restores everything.
+
+## Requirements
+
+- Flutter SDK matching `pubspec.yaml` (Dart `>=3.12.2`), plus the Android SDK
+- VS Code with the **Flutter** and **Dart** extensions
+- Internet on first run (Google Fonts are fetched at runtime; the app falls back
+  to system fonts offline)
+
+## Run it in VS Code
+
+1. Extract the ZIP and open the folder (**File > Open Folder**).
+2. In the terminal: `flutter doctor`, then `flutter pub get`.
+3. Start an Android emulator or plug in a phone, then press **F5** or run `flutter run`.
+4. Quality checks: `flutter analyze` and `flutter test`.
+
+`pubspec.lock` was written for the original project. `flutter pub get` will
+update it for the newly added `shared_preferences` package.
+
+## Folder structure
+
+```
+lib/
+  main.dart                 app + routes (splash decides the first screen)
+  config/brand.dart         name, tagline, currency, demo accounts
+  theme/app_theme.dart      palette + fonts (dark default, light optional)
+  models/models.dart        Product, Order, User, Promo, Review, Settings...
+  data/
+    app_store.dart          single app store: auth, cart, checkout, orders, admin edits, saving
+    pricing.dart            price + customization helpers
+    report_service.dart     sales numbers and CSV
+    seed_data.dart          sample menu, options, accounts, demo orders
+  widgets/                  logo, drink illustrations, shared UI, original login widgets
+  pages/                    splash, onboarding, login, signup
+  pages/customer/           home, menu, product page, cart, checkout, orders, profile...
+  pages/admin/              dashboard, orders, menu, inventory, more, settings...
+assets/images/              local photo + app icon
+test/widget_test.dart       store logic and login tests
+```
+
+## Customizing
+
+- **Name, tagline, currency, contact:** edit `lib/config/brand.dart` (defaults),
+  or change them live in *Admin > More > Settings*. Live edits are saved on the
+  device and take precedence.
+- **Colors:** `AppColors.dark` / `AppColors.light` in `lib/theme/app_theme.dart`.
+- **Logo:** drawn in `lib/widgets/brand_logo.dart`. The launcher icon files are
+  in `android/app/src/main/res/mipmap-*` and `web/icons`.
+- **Add menu items / change prices:** *Admin > Menu > Add item* or tap an item.
+  No code needed. Starting menu data lives in `lib/data/seed_data.dart` (it is
+  only used on first run or after a reset).
+- **Drink options (sizes, sweetness, milks, toppings, extra charges):** per item in
+  the item editor, and globally in *Admin > Menu > Options*.
+- **Payment instructions:** *Admin > More > Settings > Payments*. The sample
+  GCash and bank details are placeholders: replace them.
+- **Photos:** drinks without a photo show a built-in illustration. Put images in
+  `assets/images/` and enter `assets/images/name.jpg` (or an `https://` URL) in
+  the item editor. A broken image falls back to the illustration.
+- **Loyalty:** earning rate and rewards in *Admin > More > Loyalty*. Points are
+  only given for completed, **paid** orders.
+
+## Demo-only parts (read before launch)
+
+- Data lives on one device. A customer on their phone and staff on another
+  device will **not** see each other's orders.
+- Passwords are stored as plain text on the device for the demo login. Do not
+  reuse real passwords. A real launch needs Firebase Auth (or similar).
+- "Forgot password" explains that email reset is not connected.
+- Social login buttons are visual placeholders.
+- Payments are never processed. GCash/bank orders stay **unpaid** until staff tap
+  *Mark paid*.
+- Not included: photo upload (for menu items and reviews) and push notifications,
+  since they need extra plugins and a backend.
+- Ingredient stock is manual. There are no recipes, so nothing is deducted automatically.
+
+## Going live with several devices (Firebase outline)
+
+The data layer is separate from the screens, so a backend can replace
+`AppStore` storage without redesigning the UI.
+
+1. Create a Firebase project and run `flutterfire configure` (creates
+   `firebase_options.dart` with *your* keys, so none are included here).
+2. Add `firebase_core`, `firebase_auth`, `cloud_firestore`.
+3. Replace the local sign-in in `AppStore.login/register` with Firebase Auth.
+4. Store `products`, `orders`, `promos`, etc. in Firestore.
+5. **Never trust the phone for money.** Price orders and check stock in a Cloud
+   Function (or Firestore rules + server code), not in the app. The demo does this
+   re-check on the device only.
+6. Starting security rules (adjust to your data model):
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+    function isAdmin() { return request.auth != null
+      && get(/databases/$(db)/documents/users/$(request.auth.uid)).data.isAdmin == true; }
+    match /products/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /orders/{id} {
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
+      allow update: if isAdmin();
+    }
+    match /users/{uid} { allow read, write: if request.auth.uid == uid || isAdmin(); }
+  }
+}
+```
